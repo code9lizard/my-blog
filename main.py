@@ -101,6 +101,7 @@ def register():
     if register_form.validate_on_submit():
         if db.session.execute(db.select(User).filter_by(email=register_form.email.data)).scalar_one_or_none() is None:
             hashed_password = generate_password_hash(register_form.password.data)
+            hashed_password = hashed_password.decode("utf-8", "ignore")
             new_user = User(email=register_form.email.data,
                             name=register_form.name.data,
                             password=hashed_password)
