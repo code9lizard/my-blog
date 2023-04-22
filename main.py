@@ -42,7 +42,7 @@ class User(UserMixin, db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True)
-    password = db.Column(db.String(100))
+    password = db.Column(db.String(250))
     name = db.Column(db.String(100))
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
@@ -70,8 +70,10 @@ class Comment(db.Model):
     comment_author = relationship("User", back_populates="comments")
     comment = db.Column(db.Text, nullable=False)
 
+
 with app.app_context():
     db.create_all()
+
 
 def admin_only(function):
     @wraps(function)
@@ -79,11 +81,14 @@ def admin_only(function):
         if current_user.id != 1:
             return abort(403)
         return function(*args, **kwargs)
+
     return decorated_function
 
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(entity=User, ident=user_id)
@@ -118,7 +123,8 @@ def register():
 def login():
     log_in_form = LogInForm()
     if log_in_form.validate_on_submit():
-        requested_user = db.session.execute(db.select(User).filter_by(email=log_in_form.email.data)).scalar_one_or_none()
+        requested_user = db.session.execute(
+            db.select(User).filter_by(email=log_in_form.email.data)).scalar_one_or_none()
         if requested_user is None:
             flash("That email does not exist, please try again.")
         elif not check_password_hash(pwhash=requested_user.password, password=log_in_form.password.data):
@@ -222,6 +228,7 @@ def delete_comment(post_id, comment_id):
     db.session.delete(comment_to_delete)
     db.session.commit()
     return redirect(url_for('show_post', post_id=post_id))
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
